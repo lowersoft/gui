@@ -1,0 +1,7 @@
+.vs
+.vscode
+.idea
+build/
+.cache/
+imgui.ini
+compile_commands.json
