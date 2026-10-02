@@ -88,7 +88,17 @@ FramePadding   = 8, 5
 - Switch at runtime with `SetTheme("conf/themes/light.ini")` (applied at the start of the next frame) or
   `ReloadTheme()`. Configure the startup file with `AppConfig::themePath` (empty disables file theming)
   and `AppConfig::themeHotReload`.
-- `Theme::Serialize(ImGui::GetStyle())` writes the complete current style as theme INI text, which is a
+- The `hello` example has two in-app editors (only one is open at a time):
+  - **Theme editor** (`style_editor.cpp`) opens Dear ImGui's Style Editor. Edits change the live style only;
+    nothing is written until **Save** (or `Ctrl+Alt+S`). Saving writes the complete style as explicit values, so
+    comments and palette references of the original file are replaced. Closing the window or **Revert**
+    discards unsaved edits.
+  - **Text editor** (`theme_editor.cpp`) edits the INI text with an instant preview through
+    `App::PreviewThemeText()`. **Save** (or `Ctrl+Alt+S`) writes the text; **Revert** or closing discards edits.
+  - Both ask for confirmation before saving (`save_dialog.cpp`). The popup offers **Overwrite**, **Save as copy**
+    (a new `<name>.ini` next to the original; existing files are never replaced) and **Cancel**. After a copy
+    is saved it becomes the active theme and the original file stays untouched.
+- `Theme::Serialize(ImGui::GetStyle(), name, base, dpiScale)` writes the complete current style as theme INI text, which is a
   convenient starting point for a new theme.
 
 ## CMake options
