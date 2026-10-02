@@ -65,8 +65,21 @@ public:
     /// Re-reads the current theme file at the start of the next frame.
     void ReloadTheme();
 
+    /// Applies theme text (for example from an in-app editor) at the start of the next frame.
+    /// The theme file on disk is not touched; call ReloadTheme() to discard the preview.
+    void PreviewThemeText(const std::string& text);
+
     /// The theme currently in effect, including any warnings from its last load.
     const Theme& CurrentTheme() const { return theme_; }
+
+    /// Resolved path of the active theme file; empty when no file is loaded.
+    const std::string& ThemeFile() const { return themeFile_; }
+
+    /// Incremented every time a theme file is loaded from disk.
+    unsigned ThemeRevision() const { return themeRevision_; }
+
+    /// Scale applied to all theme sizes (monitor content scale at startup).
+    float DpiScale() const { return dpiScale_; }
 
     GLFWwindow*      Window() { return window_; }
     const AppConfig& Config() const { return config_; }
@@ -96,8 +109,11 @@ private:
     Theme       theme_;
     std::string themeFile_;            ///< Resolved path of the active theme file; empty if none.
     long long   themeStamp_ = 0;       ///< File timestamp at the last successful load.
+    unsigned    themeRevision_ = 0;
     double      nextThemeCheck_ = 0.0;
     std::string pendingThemePath_;
+    std::string pendingThemeText_;
+    bool        hasPendingThemeText_ = false;
     float       dpiScale_ = 1.0f;
 };
 

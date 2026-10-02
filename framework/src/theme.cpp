@@ -286,9 +286,22 @@ void Theme::Apply(float dpiScale) const {
     style.FontScaleDpi = dpiScale;
 }
 
-std::string Theme::Serialize(const ImGuiStyle& style, const std::string& name) {
+std::string Theme::Serialize(const ImGuiStyle& style, const std::string& name, ThemeBase base, float dpiScale) {
+    const char* baseName = base == ThemeBase::Light ? "light" : (base == ThemeBase::Classic ? "classic" : "dark");
+    const float inverse  = dpiScale > 0.0f ? 1.0f / dpiScale : 1.0f;
+
+    // Sizes are stored at 100% scale; rounding to two decimals hides the float noise of the division.
+    const auto unscale = [inverse](float value, bool scaled) {
+        return scaled ? std::round(value * inverse * 100.0f) / 100.0f : value;
+    };
+    const auto isScaled = [](const char* field) {
+        const std::string key = field;
+        const bool alignment  = key.size() >= 5 && key.compare(key.size() - 5, 5, "Align") == 0;
+        return !alignment && key != "Alpha" && key != "DisabledAlpha";
+    };
+
     std::ostringstream out;
-    out << "[theme]\nname = " << name << "\nbase = dark\n\n[colors]\n";
+    out << "[theme]\nname = " << name << "\nbase = " << baseName << "\n\n[colors]\n";
     for (int i = 0; i < ImGuiCol_COUNT; ++i) {
         out << ImGui::GetStyleColorName(i) << " = " << FormatHex(style.Colors[i]) << "\n";
     }
@@ -296,12 +309,14 @@ std::string Theme::Serialize(const ImGuiStyle& style, const std::string& name) {
     out << "\n[style]\n";
     char buffer[64];
     for (const FloatField& field : kFloatFields) {
-        std::snprintf(buffer, sizeof buffer, "%g", static_cast<double>(style.*field.member));
+        std::snprintf(buffer, sizeof buffer, "%g", static_cast<double>(unscale(style.*field.member, isScaled(field.name))));
         out << field.name << " = " << buffer << "\n";
     }
     for (const Vec2Field& field : kVec2Fields) {
-        std::snprintf(buffer, sizeof buffer, "%g, %g", static_cast<double>((style.*field.member).x),
-                      static_cast<double>((style.*field.member).y));
+        const bool   scaled = isScaled(field.name);
+        const ImVec2 value  = style.*field.member;
+        std::snprintf(buffer, sizeof buffer, "%g, %g", static_cast<double>(unscale(value.x, scaled)),
+                      static_cast<double>(unscale(value.y, scaled)));
         out << field.name << " = " << buffer << "\n";
     }
     return out.str();

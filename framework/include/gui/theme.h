@@ -49,7 +49,11 @@ public:
     const std::vector<std::string>& Warnings() const { return warnings_; }
 
     /// Serialises a complete style (every color and supported metric) to theme INI text.
-    static std::string Serialize(const ImGuiStyle& style, const std::string& name = "Exported");
+    /// @param base     Written to the `base` key of the `[theme]` section.
+    /// @param dpiScale Scale that was applied to @p style by Apply(); size values are divided by it so the
+    ///                 file stays resolution independent. Alpha values and alignments are never scaled.
+    static std::string Serialize(const ImGuiStyle& style, const std::string& name = "Exported",
+                                 ThemeBase base = ThemeBase::Dark, float dpiScale = 1.0f);
 
 private:
     std::string name_ = "Unnamed";
