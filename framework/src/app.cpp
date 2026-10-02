@@ -65,6 +65,11 @@ void App::ReloadTheme() {
     if (!themeFile_.empty()) pendingThemePath_ = themeFile_;
 }
 
+void App::PreviewThemeText(const std::string& text) {
+    pendingThemeText_    = text;
+    hasPendingThemeText_ = true;
+}
+
 void App::ApplyTheme(const Theme& theme) {
     theme.Apply(dpiScale_);
     if (config_.viewports) {
@@ -88,16 +93,28 @@ bool App::LoadTheme(const std::string& path) {
     theme_       = std::move(candidate);
     themeFile_   = resolved;
     themeStamp_  = detail::FileTimestamp(resolved);
+    ++themeRevision_;
     ApplyTheme(theme_);
     return true;
 }
 
 // Runs between frames so style changes never land in the middle of a frame.
 void App::UpdateTheme() {
+    // A file request supersedes any pending preview.
     if (!pendingThemePath_.empty()) {
         const std::string path = std::move(pendingThemePath_);
         pendingThemePath_.clear();
+        hasPendingThemeText_ = false;
         LoadTheme(path);
+        return;
+    }
+
+    if (hasPendingThemeText_) {
+        hasPendingThemeText_ = false;
+        Theme preview;
+        preview.LoadFromString(pendingThemeText_, "editor");
+        theme_ = std::move(preview);
+        ApplyTheme(theme_);
         return;
     }
 
